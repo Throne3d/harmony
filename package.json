@@ -5,6 +5,7 @@
   "main": "lib/harmony.js",
   "bin": "lib/server.js",
   "scripts": {
+    "lint": "eslint .",
     "start": "node lib/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
