@@ -116,4 +116,18 @@ describe('Harmony', function() {
       });
     });
   });
+
+  describe('processGenericMessage', function() {
+    it('detects commands');
+    it('detects non-commands');
+  });
+
+  describe('processMention', function() {
+    it('detects commands');
+    it('detects simple mentions');
+  });
+
+  describe('processCommand', function() {
+    it('works to a basic level');
+  });
 });
