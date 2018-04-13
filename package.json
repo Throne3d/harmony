@@ -6,8 +6,10 @@
   "bin": "lib/server.js",
   "scripts": {
     "lint": "eslint .",
+    "posttest": "nyc report && npm run lint",
+    "report": "nyc report --reporter=text-lcov | coveralls",
     "start": "node lib/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "nyc --reporter=none mocha test/test-*.js"
   },
   "repository": {
     "type": "git",
