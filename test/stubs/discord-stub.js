@@ -62,6 +62,7 @@ class MessageStub extends Discord.Message {
     data.content = data.content || `test message ${data.id}`;
     data.embeds = data.embeds || [];
     data.attachments = data.attachments || [];
+    data.author = data.author || client.dataManager.newUser();
     super(channel, data, client);
 
     this.react = client.sendReactionStub;

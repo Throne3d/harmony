@@ -1,5 +1,6 @@
 const harmony = require('../lib/harmony');
 const discordStub = require('./stubs/discord-stub');
+const Discord = require('discord.js');
 const winston = require('winston');
 const EventEmitter = require('events');
 const sinon = require('sinon');
@@ -8,7 +9,7 @@ const expect = chai.expect;
 
 describe('Harmony', function() {
   function createBot(clientType) {
-    clientType = clientType || 'ClientStub';
+    clientType = clientType || 'SimplestClientStub';
     const client = discordStub[clientType];
     const bot = new harmony.Harmony('temp');
     bot.client = new client();
@@ -66,14 +67,52 @@ describe('Harmony', function() {
   });
 
   describe('processMessage', function() {
-    it('skips own messages', done => {
-      const bot = createBot('SimplestClientStub');
+    it('skips own messages', function() {
+      const bot = createBot();
       const message = bot.client.channel.newMessage({ author: bot.client.user });
-      bot.processMessage(message).then(x => {
+      return bot.processMessage(message).then(processed => {
         expect(bot.client.sendMessageStub.callCount).to.equal(0);
         expect(bot.client.sendReactionStub.callCount).to.equal(0);
-        expect(x).to.equal(false);
-        done();
+        expect(processed).to.equal(false);
+      });
+    });
+
+    it('processes mentions', function() {
+      const bot = createBot();
+      const botUser = bot.client.user;
+      const message = bot.client.channel.newMessage({
+        content: `<@${botUser.id}>, test`,
+        mentions: new Discord.Collection([[botUser.id, botUser]])
+      });
+      const checkMentionStub = sinon.stub(bot, 'checkMessageMentionsMe');
+      checkMentionStub.withArgs(message).resolves(true);
+      const processMentionStub = sinon.stub(bot, 'processMention');
+      processMentionStub.withArgs(message).resolves(true);
+      const processGenericStub = sinon.stub(bot, 'processGenericMessage');
+      return bot.processMessage(message).then(processed => {
+        expect(processed).to.equal(true);
+        expect(checkMentionStub.callCount).to.equal(1);
+        expect(processMentionStub.callCount).to.equal(1);
+        expect(processGenericStub.callCount).to.equal(0);
+      });
+    });
+
+    it('processes generic messages', function() {
+      const bot = createBot();
+      const message = bot.client.channel.newMessage({
+        content: `test`,
+        mentions: new Discord.Collection([])
+      });
+      const checkMentionStub = sinon.stub(bot, 'checkMessageMentionsMe');
+      checkMentionStub.withArgs(message).resolves(false);
+      const processMentionStub = sinon.stub(bot, 'processMention');
+      const processGenericStub = sinon.stub(bot, 'processGenericMessage');
+      processGenericStub.withArgs(message).resolves(true);
+      return bot.processMessage(message).then(processed => {
+        expect(processed).to.equal(true);
+        expect(checkMentionStub.callCount).to.equal(1);
+        expect(processMentionStub.callCount).to.equal(0);
+        expect(processGenericStub.callCount).to.equal(1);
       });
     });
   });
