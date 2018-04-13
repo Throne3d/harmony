@@ -1,4 +1,5 @@
 const harmony = require('../lib/harmony');
+const discordStub = require('./stubs/discord-stub');
 const winston = require('winston');
 const EventEmitter = require('events');
 const sinon = require('sinon');
@@ -6,6 +7,15 @@ const chai = require('chai');
 const expect = chai.expect;
 
 describe('Harmony', function() {
+  function createBot(clientType) {
+    clientType = clientType || 'ClientStub';
+    const client = discordStub[clientType];
+    const bot = new harmony.Harmony('temp');
+    bot.client = new client();
+    bot.bindEvents();
+    return bot;
+  }
+
   describe('constructor', function() {
     it('accepts a token', function() {
       const bot = new harmony.Harmony("token");
@@ -51,6 +61,19 @@ describe('Harmony', function() {
           ['arg example']
         ]);
         stub.restore();
+      });
+    });
+  });
+
+  describe('processMessage', function() {
+    it('skips own messages', done => {
+      const bot = createBot('SimplestClientStub');
+      const message = bot.client.channel.newMessage({ author: bot.client.user });
+      bot.processMessage(message).then(x => {
+        expect(bot.client.sendMessageStub.callCount).to.equal(0);
+        expect(bot.client.sendReactionStub.callCount).to.equal(0);
+        expect(x).to.equal(false);
+        done();
       });
     });
   });
