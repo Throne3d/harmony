@@ -84,14 +84,14 @@ describe('Harmony', function() {
         content: `<@${botUser.id}>, test`,
         mentions: new Discord.Collection([[botUser.id, botUser]])
       });
-      const checkMentionStub = sinon.stub(bot, 'checkMessageMentionsMe');
-      checkMentionStub.withArgs(message).resolves(true);
+      const checkAddressStub = sinon.stub(bot, 'checkMessageAddressesMe');
+      checkAddressStub.withArgs(message).resolves([true, 'test']);
       const processMentionStub = sinon.stub(bot, 'processMention');
-      processMentionStub.withArgs(message).resolves(true);
+      processMentionStub.withArgs(message, 'test').resolves(true);
       const processGenericStub = sinon.stub(bot, 'processGenericMessage');
       return bot.processMessage(message).then(processed => {
         expect(processed).to.equal(true);
-        expect(checkMentionStub.callCount).to.equal(1);
+        expect(checkAddressStub.callCount).to.equal(1);
         expect(processMentionStub.callCount).to.equal(1);
         expect(processGenericStub.callCount).to.equal(0);
       });
@@ -103,14 +103,14 @@ describe('Harmony', function() {
         content: `test`,
         mentions: new Discord.Collection([])
       });
-      const checkMentionStub = sinon.stub(bot, 'checkMessageMentionsMe');
-      checkMentionStub.withArgs(message).resolves(false);
+      const checkAddressStub = sinon.stub(bot, 'checkMessageAddressesMe');
+      checkAddressStub.withArgs(message).resolves([false]);
       const processMentionStub = sinon.stub(bot, 'processMention');
       const processGenericStub = sinon.stub(bot, 'processGenericMessage');
       processGenericStub.withArgs(message).resolves(true);
       return bot.processMessage(message).then(processed => {
         expect(processed).to.equal(true);
-        expect(checkMentionStub.callCount).to.equal(1);
+        expect(checkAddressStub.callCount).to.equal(1);
         expect(processMentionStub.callCount).to.equal(0);
         expect(processGenericStub.callCount).to.equal(1);
       });
