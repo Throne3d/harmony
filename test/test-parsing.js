@@ -7,7 +7,7 @@ describe('Harmony', function() {
   context('parsing', function() {
     describe('checkMessageAddressesMe', function() {
       context('in guild channel', function() {
-        it('resolves correctly for regular message', function() {
+        it('resolves negatively for regular message', function() {
           const bot = createBot();
           const message = bot.client.channel.newMessage({
             content: 'Some random message',
@@ -20,7 +20,21 @@ describe('Harmony', function() {
           });
         });
 
-        it('resolves correctly for clear mention', function() {
+        it('resolves negatively for unclear mention', function() {
+          const bot = createBot();
+          const botUser = bot.client.user;
+          const message = bot.client.channel.newMessage({
+            content: `there is a bot named ${botUser} which responds to commands`,
+            mentions: new Discord.Collection([[botUser.id, botUser]])
+          });
+
+          return bot.checkMessageAddressesMe(message).then(([addressesMe, text]) => {
+            expect(addressesMe).to.equal(false);
+            expect(text).to.be.undefined;
+          });
+        });
+
+        it('resolves positively for clear mention', function() {
           const bot = createBot();
           const botUser = bot.client.user;
           const message = bot.client.channel.newMessage({
