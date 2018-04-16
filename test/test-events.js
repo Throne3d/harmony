@@ -130,13 +130,122 @@ describe('Harmony', function() {
   });
 
   describe('processGenericMessage', function() {
-    it('detects commands');
-    it('detects non-commands');
+    it('processes a detected command', function() {
+      const bot = createBot();
+      const message = bot.client.channel.newMessage({
+        content: '!test',
+        mentions: new Discord.Collection([])
+      });
+      const getCommandStub = sinon.stub(bot, 'getCommand');
+      getCommandStub.withArgs(message).returns('test');
+      const processCommandStub = sinon.stub(bot, 'processCommand');
+      processCommandStub.withArgs('test', message).resolves('processed test');
+      return bot.processGenericMessage(message).then(response => {
+        expect(response).to.equal('processed test');
+        expect(bot.client.sendMessageStub.callCount).to.equal(0);
+        expect(bot.client.sendReactionStub.callCount).to.equal(0);
+        expect(getCommandStub.args).to.deep.equal([
+          [message]
+        ]);
+        expect(processCommandStub.args).to.deep.equal([
+          ['test', message]
+        ]);
+      });
+    });
+
+    it('handles an unhandled command-like', function() {
+      const bot = createBot();
+      const message = bot.client.channel.newMessage({
+        content: '!nonexistent',
+        mentions: new Discord.Collection([])
+      });
+      const getCommandStub = sinon.stub(bot, 'getCommand');
+      getCommandStub.withArgs(message).returns('nonexistent');
+      const processCommandStub = sinon.stub(bot, 'processCommand');
+      processCommandStub.withArgs('nonexistent', message).resolves(false);
+      const reactionFallbackStub = sinon.stub(bot, 'performReactionWithFallback');
+      reactionFallbackStub.withArgs(message).resolves('fallback test');
+      return bot.processGenericMessage(message).then(response => {
+        expect(response).to.equal('fallback test');
+        expect(bot.client.sendMessageStub.callCount).to.equal(0);
+        expect(bot.client.sendReactionStub.callCount).to.equal(0);
+        expect(getCommandStub.args).to.deep.equal([
+          [message]
+        ]);
+        expect(processCommandStub.args).to.deep.equal([
+          ['nonexistent', message]
+        ]);
+        expect(reactionFallbackStub.args).to.deep.equal([
+          [message, "❔", "sorry, I don't understand what you mean."]
+        ]);
+      });
+    });
+
+    it('handles non-commands', function() {
+      const bot = createBot();
+      const message = bot.client.channel.newMessage({
+        content: 'message text',
+        mentions: new Discord.Collection([])
+      });
+      const getCommandStub = sinon.stub(bot, 'getCommand');
+      getCommandStub.withArgs(message).returns(null);
+      const processCommandStub = sinon.stub(bot, 'processCommand');
+      return bot.processGenericMessage(message).then(response => {
+        expect(response).to.equal(true);
+        expect(bot.client.sendMessageStub.callCount).to.equal(0);
+        expect(bot.client.sendReactionStub.callCount).to.equal(0);
+        expect(getCommandStub.args).to.deep.equal([
+          [message]
+        ]);
+        expect(processCommandStub.callCount).to.equal(0);
+      });
+    });
   });
 
   describe('processMention', function() {
-    it('detects commands');
-    it('detects simple mentions');
+    it('handles commands', function() {
+      const bot = createBot();
+      const botUser = bot.client.user;
+      const message = bot.client.channel.newMessage({
+        content: `<@${botUser.id}>, test`,
+        mentions: new Discord.Collection([[botUser.id, botUser]])
+      });
+      const processCommandStub = sinon.stub(bot, 'processCommand');
+      processCommandStub.withArgs('test', message).resolves('processed test');
+      return bot.processMention(message, 'test').then(response => {
+        expect(response).to.equal('processed test');
+        expect(bot.client.sendMessageStub.callCount).to.equal(0);
+        expect(bot.client.sendReactionStub.callCount).to.equal(0);
+        expect(processCommandStub.args).to.deep.equal([
+          ['test', message]
+        ]);
+      });
+    });
+
+    it('handles non-commands', function() {
+      const bot = createBot();
+      const botUser = bot.client.user;
+      const message = bot.client.channel.newMessage({
+        content: `<@${botUser.id}>, nonexistent`,
+        mentions: new Discord.Collection([[botUser.id, botUser]])
+      });
+      const processCommandStub = sinon.stub(bot, 'processCommand');
+      processCommandStub.withArgs('nonexistent', message).resolves(false);
+      const messageReactStub = sinon.stub();
+      message.react = messageReactStub;
+      messageReactStub.resolves(true);
+      return bot.processMention(message, 'nonexistent').then(response => {
+        expect(response).to.equal(false);
+        expect(bot.client.sendMessageStub.callCount).to.equal(0);
+        expect(bot.client.sendReactionStub.callCount).to.equal(0);
+        expect(processCommandStub.args).to.deep.equal([
+          ['nonexistent', message]
+        ]);
+        expect(messageReactStub.args).to.deep.equal([
+          ['❔']
+        ]);
+      });
+    });
   });
 
   describe('processCommand', function() {
