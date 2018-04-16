@@ -52,5 +52,62 @@ describe('Harmony', function() {
       context.skip('in DM');
       context.skip('in group DM');
     });
+
+    describe('getCommand', function() {
+      it('works with a non-command', function() {
+        const bot = createBot();
+        const message = bot.client.channel.newMessage({
+          content: 'test',
+          mentions: new Discord.Collection()
+        });
+
+        expect(bot.getCommand(message)).to.be.null;
+      });
+
+      it('works with a basic command', function() {
+        const bot = createBot();
+        const message = bot.client.channel.newMessage({
+          content: '!test',
+          mentions: new Discord.Collection()
+        });
+
+        expect(bot.getCommand(message)).to.equal('test');
+      });
+
+      it('works with a different command prefix', function() {
+        const bot = createBot();
+        const message = bot.client.channel.newMessage({
+          content: '?test',
+          mentions: new Discord.Collection()
+        });
+
+        expect(bot.getCommand(message)).to.equal(null);
+        bot.commandPrefix = '?';
+        expect(bot.getCommand(message)).to.equal('test');
+      });
+
+      it('rejects probable negatives', function() {
+        const bot = createBot();
+        let message;
+
+        message = bot.client.channel.newMessage({
+          content: '!!test',
+          mentions: new Discord.Collection()
+        });
+        expect(bot.getCommand(message)).to.equal(null);
+
+        message = bot.client.channel.newMessage({
+          content: '! test',
+          mentions: new Discord.Collection()
+        });
+        expect(bot.getCommand(message)).to.equal(null);
+
+        message = bot.client.channel.newMessage({
+          content: '!? what',
+          mentions: new Discord.Collection()
+        });
+        expect(bot.getCommand(message)).to.equal(null);
+      });
+    });
   });
 });
