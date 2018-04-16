@@ -91,8 +91,14 @@ describe('Harmony', function() {
       const processGenericStub = sinon.stub(bot, 'processGenericMessage');
       return bot.processMessage(message).then(processed => {
         expect(processed).to.equal(true);
-        expect(checkAddressStub.callCount).to.equal(1);
-        expect(processMentionStub.callCount).to.equal(1);
+        expect(bot.client.sendMessageStub.callCount).to.equal(0);
+        expect(bot.client.sendReactionStub.callCount).to.equal(0);
+        expect(checkAddressStub.args).to.deep.equal([
+          [message]
+        ]);
+        expect(processMentionStub.args).to.deep.equal([
+          [message, 'test']
+        ]);
         expect(processGenericStub.callCount).to.equal(0);
       });
     });
@@ -110,9 +116,15 @@ describe('Harmony', function() {
       processGenericStub.withArgs(message).resolves(true);
       return bot.processMessage(message).then(processed => {
         expect(processed).to.equal(true);
-        expect(checkAddressStub.callCount).to.equal(1);
+        expect(bot.client.sendMessageStub.callCount).to.equal(0);
+        expect(bot.client.sendReactionStub.callCount).to.equal(0);
+        expect(checkAddressStub.args).to.deep.equal([
+          [message]
+        ]);
         expect(processMentionStub.callCount).to.equal(0);
-        expect(processGenericStub.callCount).to.equal(1);
+        expect(processGenericStub.args).to.deep.equal([
+          [message]
+        ]);
       });
     });
   });
