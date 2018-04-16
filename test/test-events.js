@@ -1,22 +1,13 @@
 const harmony = require('../lib/harmony');
-const discordStub = require('./stubs/discord-stub');
 const Discord = require('discord.js');
 const winston = require('winston');
 const EventEmitter = require('events');
 const sinon = require('sinon');
 const chai = require('chai');
 const expect = chai.expect;
+const { createBot } = require('./helpers');
 
 describe('Harmony', function() {
-  function createBot(clientType) {
-    clientType = clientType || 'SimplestClientStub';
-    const client = discordStub[clientType];
-    const bot = new harmony.Harmony('temp');
-    bot.client = new client();
-    bot.bindEvents();
-    return bot;
-  }
-
   describe('constructor', function() {
     it('accepts a token', function() {
       const bot = new harmony.Harmony("token");
