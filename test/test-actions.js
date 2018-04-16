@@ -106,5 +106,76 @@ describe('Harmony', function() {
         });
       });
     });
+
+    describe('longRespondTo', function() {
+      it('sends short messages without further change', function() {
+        const bot = createBot();
+        const message = bot.client.channel.newMessage({
+          content: 'Message',
+          mentions: new Discord.Collection()
+        });
+        message.reply = sinon.stub();
+        const reply = 'successful short response';
+        message.reply.resolves(reply);
+
+        return bot.longRespondTo(message, 'short response').then(response => {
+          expect(bot.client.sendMessageStub.callCount).to.equal(0);
+          expect(bot.client.sendReactionStub.callCount).to.equal(0);
+          expect(message.reply.args).to.deep.equal([
+            ['short response']
+          ]);
+          expect(response).to.equal(reply);
+        });
+      });
+
+      it('sends long messages as PMs in succession', function() {
+        const bot = createBot();
+        const author = bot.client.newUser();
+        const message = bot.client.channel.newMessage({
+          content: 'Message',
+          mentions: new Discord.Collection(),
+          author
+        });
+        message.reply = sinon.stub();
+        author.send = sinon.stub();
+
+        const text = 'long response' + 'a'.repeat(2000);
+        const splits = [text.substring(0, 1950), text.substring(1950)];
+
+        const reply1 = 'first response succeeded';
+        const reply2 = 'second response succeeded';
+
+        function quickPromise(count, reply) {
+          return new Promise(function(resolve) {
+            setTimeout(function() {
+              expect(author.send.callCount).to.equal(count);
+              resolve(reply);
+            }, 50);
+          });
+        }
+        author.send.withArgs(splits[0]).callsFake(_ => quickPromise(1, reply1));
+        author.send.withArgs(splits[1]).callsFake(_ => quickPromise(2, reply2));
+
+        message.react = sinon.stub();
+        message.react.callsFake((react) => Promise.resolve(react + ' succeeded'));
+
+        return bot.longRespondTo(message, text).then(([messages, reactAndSummary]) => {
+          expect(bot.client.sendMessageStub.callCount).to.equal(0);
+          expect(bot.client.sendReactionStub.callCount).to.equal(0);
+          expect(message.reply.callCount).to.equal(0);
+          expect(author.send.args).to.deep.equal([
+            [splits[0]],
+            [splits[1]]
+          ]);
+          expect(message.react.args).to.deep.equal([
+            ['📬']
+          ]);
+          expect(messages).to.deep.equal([reply1, reply2]);
+          const [reacts, sentSummary] = reactAndSummary;
+          expect(reacts).to.deep.equal(['📬 succeeded']);
+          expect(sentSummary).to.be.null;
+        });
+      });
+    });
   });
 });
