@@ -5,7 +5,7 @@ const expect = chai.expect;
 const { createBot } = require('./helpers');
 
 describe('Harmony', function() {
-  context('commands', function() {
+  context('command functions', function() {
     describe('processCommand', function() {
       const commandName = 'test';
       const aliasName = 'word';
@@ -73,6 +73,50 @@ describe('Harmony', function() {
 
         it('processes with args', function() {
           return jointTest(aliasName, 'example args');
+        });
+      });
+    });
+  });
+
+  context('commands', function() {
+    describe('help', function() {
+      beforeEach(function() {
+        this.bot = createBot();
+        this.command = this.bot.listCommands().help;
+      });
+
+      it('lists commands', function() {
+        const bot = this.bot;
+        bot.commands = {
+          help: {
+            description: 'Get some help!',
+            process: this.command.process,
+          },
+          test: {
+            description: 'Test command',
+            aliases: ['other', 'command']
+          }
+        };
+
+        const message = bot.client.channel.newMessage({
+          content: '!help',
+          mentions: new Discord.Collection()
+        });
+
+        const responseStub = sinon.stub(bot, 'longRespondTo').resolves(null);
+        return this.command.process('help', message).then(value => {
+          expect(value).to.equal(true);
+          expect(responseStub.callCount).to.equal(1);
+          const args = responseStub.args[0];
+          expect(args.length).to.equal(2);
+          expect(args[0]).to.equal(message);
+          const response = args[1];
+          expect(response).to.equal(
+            "to use my commands, either prefix the command with a `!` or 'at' me with the command (e.g. `!help`, `@Harmony, help`).\n\n" +
+            "**Commands**\n" +
+            "`help`: Get some help!\n" +
+            "`test`: Test command [aliased to `other`, `command`]\n"
+          );
         });
       });
     });
