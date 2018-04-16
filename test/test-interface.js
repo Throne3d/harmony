@@ -40,12 +40,13 @@ describe('Harmony', function() {
         discriminator: 1234,
         username: 'Temp'
       });
+      bot.client.channel.name = 'general';
       const message = bot.client.channel.newMessage({
         content: `test`,
         mentions: new Discord.Collection([]),
         author
       });
-      expect(bot.debugifyMessage(message)).to.equal("Temp#1234: test");
+      expect(bot.debugifyMessage(message)).to.equal("#general – Temp#1234: test");
     });
 
     it('debugs a complicated message', function() {
@@ -61,6 +62,7 @@ describe('Harmony', function() {
       });
       const otherMember = bot.client.guild.newGuildMember({ nick: 'Nick', user: otherUser });
 
+      bot.client.channel.name = 'chat';
       const message = bot.client.channel.newMessage({
         content: `test ${otherMember}`,
         mentions: new Discord.Collection([[otherUser.id, otherUser]]),
@@ -69,7 +71,7 @@ describe('Harmony', function() {
       message.newAttachment();
       message.newEmbed();
 
-      expect(bot.debugifyMessage(message)).to.equal("Temp#4321: test @Nick [has attachments, has embeds]");
+      expect(bot.debugifyMessage(message)).to.equal("#chat – Temp#4321: test @Nick [has attachments, has embeds]");
     });
   });
 

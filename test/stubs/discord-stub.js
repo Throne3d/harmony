@@ -53,7 +53,7 @@ class GuildStub extends Discord.Guild {
 class TextChannelStub extends Discord.TextChannel {
   constructor(guild, data = {}) {
     data.id = data.id || generateID('channel');
-    data.name = data.name || `Channel${data.id}`;
+    data.name = data.name || `channel${data.id}`;
     super(guild, data);
 
     this.send = guild.client.sendMessageStub;
