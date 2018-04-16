@@ -120,5 +120,106 @@ describe('Harmony', function() {
         });
       });
     });
+
+    describe('roll', function() {
+      beforeEach(function() {
+        this.bot = createBot();
+        this.command = this.bot.listCommands().dice;
+        this.randomStub = sinon.stub(Math, 'random');
+      });
+      afterEach(function() {
+        this.randomStub.restore();
+      });
+
+      it('handles invalid formats', function() {
+        const message = this.bot.client.channel.newMessage({
+          content: '!roll blah',
+        });
+        message.reply = sinon.stub().resolves();
+        return this.command.process('roll blah', message, 'blah').then(_ => {
+          expect(message.reply.args).to.deep.equal([
+            ["I don't understand that dice roll format."]
+          ]);
+          expect(this.bot.client.sendMessageStub.callCount).to.equal(0);
+          expect(this.bot.client.sendReactionStub.callCount).to.equal(0);
+        });
+      });
+
+      it('handles too many dice', function() {
+        const message = this.bot.client.channel.newMessage({
+          content: '!roll 501d6',
+        });
+        message.reply = sinon.stub().resolves();
+        return this.command.process('roll 501d6', message, '501d6').then(_ => {
+          expect(message.reply.args).to.deep.equal([
+            ["please use a smaller number of dice (less than 500)."]
+          ]);
+          expect(this.bot.client.sendMessageStub.callCount).to.equal(0);
+          expect(this.bot.client.sendReactionStub.callCount).to.equal(0);
+        });
+      });
+
+      it('handles too few faces', function() {
+        const message = this.bot.client.channel.newMessage({
+          content: '!roll 6d0',
+        });
+        message.reply = sinon.stub().resolves();
+        return this.command.process('roll 6d0', message, '6d0').then(_ => {
+          expect(message.reply.args).to.deep.equal([
+            ["please use dice with at least 1 face."]
+          ]);
+          expect(this.bot.client.sendMessageStub.callCount).to.equal(0);
+          expect(this.bot.client.sendReactionStub.callCount).to.equal(0);
+        });
+      });
+
+      it('rolls once dice', function() {
+        const message = this.bot.client.channel.newMessage({
+          content: '!roll 1d6',
+        });
+        const responseStub = sinon.stub(this.bot, 'longRespondTo');
+        responseStub.resolves();
+        this.randomStub.returns(0.55);
+        return this.command.process('roll 1d6', message, '1d6').then(_ => {
+          expect(responseStub.args).to.deep.equal([
+            [message, "result: 4", "(Roll totaled 4)"]
+          ]);
+          expect(this.bot.client.sendMessageStub.callCount).to.equal(0);
+          expect(this.bot.client.sendReactionStub.callCount).to.equal(0);
+        });
+      });
+
+      it('rolls multiple dice', function() {
+        const message = this.bot.client.channel.newMessage({
+          content: '!roll 10d10',
+        });
+        const responseStub = sinon.stub(this.bot, 'longRespondTo');
+        responseStub.resolves();
+        this.randomStub.returns(0.55);
+        return this.command.process('roll 10d10', message, '10d10').then(_ => {
+          expect(responseStub.args).to.deep.equal([
+            [message, "total: 60", "(Roll totaled 60)"]
+          ]);
+          expect(this.bot.client.sendMessageStub.callCount).to.equal(0);
+          expect(this.bot.client.sendReactionStub.callCount).to.equal(0);
+        });
+      });
+
+      it('shows rolls if told', function() {
+        const message = this.bot.client.channel.newMessage({
+          content: '!showroll 10d10',
+        });
+        const responseStub = sinon.stub(this.bot, 'longRespondTo');
+        responseStub.resolves();
+        this.randomStub.returns(0.55);
+        return this.command.process('showroll 10d10', message, '10d10').then(_ => {
+          expect(responseStub.args).to.deep.equal([
+            [message, `rolls: 6${', 6'.repeat(9)}\ntotal: 60`, "(Roll totaled 60)"]
+          ]);
+          expect(this.bot.client.sendMessageStub.callCount).to.equal(0);
+          expect(this.bot.client.sendReactionStub.callCount).to.equal(0);
+        });
+      });
+    });
   });
 });

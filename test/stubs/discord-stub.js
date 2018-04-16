@@ -61,6 +61,7 @@ class TextChannelStub extends Discord.TextChannel {
   }
 
   newMessage(data) {
+    data.mentions = data.mentions || new Discord.Collection();
     return this.guild.client.dataManager.newMessage(this, data);
   }
 }
