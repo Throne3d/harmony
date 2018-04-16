@@ -69,42 +69,6 @@ class MessageStub extends Discord.Message {
   }
 }
 
-class ClientStub extends EventEmitter {
-  constructor() {
-    super();
-
-    this.sendMessageStub = sinon.stub();
-    this.sendReactionStub = sinon.stub();
-
-    this.dataManager = new DataManagerStub(this);
-
-    const resolver = new Discord.Client().resolver;
-    resolver.client = this;
-    this.resolver = resolver;
-
-    this.guilds = new Discord.Collection();
-    this.channels = new Discord.Collection();
-    this.users = new Discord.Collection();
-
-    this.user = this.newUser({
-      username: 'Harmony',
-      bot: true,
-    });
-  }
-
-  rest() {
-    throw new Error("Stub must not call REST methods.");
-  }
-
-  newGuild(data) {
-    return this.dataManager.newGuild(data);
-  }
-
-  newUser(data) {
-    return this.dataManager.newUser(data);
-  }
-}
-
 class DataManagerStub {
   constructor(client) {
     this.client = client;
@@ -156,6 +120,42 @@ class DataManagerStub {
     const message = new MessageStub(channel, data, this.client);
     /* https://github.com/discordjs/discord.js/blob/e5bd6ec150baee5ee4ca0830b80753b7c59f4844/src/client/actions/MessageCreate.js#L33 */
     return message;
+  }
+}
+
+class ClientStub extends EventEmitter {
+  constructor() {
+    super();
+
+    this.sendMessageStub = sinon.stub();
+    this.sendReactionStub = sinon.stub();
+
+    this.dataManager = new DataManagerStub(this);
+
+    const resolver = new Discord.Client().resolver;
+    resolver.client = this;
+    this.resolver = resolver;
+
+    this.guilds = new Discord.Collection();
+    this.channels = new Discord.Collection();
+    this.users = new Discord.Collection();
+
+    this.user = this.newUser({
+      username: 'Harmony',
+      bot: true,
+    });
+  }
+
+  rest() {
+    throw new Error("Stub must not call REST methods.");
+  }
+
+  newGuild(data) {
+    return this.dataManager.newGuild(data);
+  }
+
+  newUser(data) {
+    return this.dataManager.newUser(data);
   }
 }
 
