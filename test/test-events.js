@@ -72,7 +72,7 @@ describe('Harmony', function() {
       const bot = createBot();
       const botUser = bot.client.user;
       const message = bot.client.channel.newMessage({
-        content: `<@${botUser.id}>, test`,
+        content: `${botUser}, test`,
         mentions: new Discord.Collection([[botUser.id, botUser]])
       });
       const checkAddressStub = sinon.stub(bot, 'checkMessageAddressesMe');
@@ -198,7 +198,7 @@ describe('Harmony', function() {
       const bot = createBot();
       const botUser = bot.client.user;
       const message = bot.client.channel.newMessage({
-        content: `<@${botUser.id}>, test`,
+        content: `${botUser}, test`,
         mentions: new Discord.Collection([[botUser.id, botUser]])
       });
       const processCommandStub = sinon.stub(bot, 'processCommand');
@@ -217,7 +217,7 @@ describe('Harmony', function() {
       const bot = createBot();
       const botUser = bot.client.user;
       const message = bot.client.channel.newMessage({
-        content: `<@${botUser.id}>, nonexistent`,
+        content: `${botUser}, nonexistent`,
         mentions: new Discord.Collection([[botUser.id, botUser]])
       });
       const processCommandStub = sinon.stub(bot, 'processCommand');

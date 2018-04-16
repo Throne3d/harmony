@@ -13,7 +13,7 @@ function generateID(item) {
   const nextID = nextIDs[item];
   if (String(nextID)[0] !== String(nextID + 1)[0]) throw new Error(`Not enough ${item} ID space.`);
   nextIDs[item] = nextID + 1;
-  return nextID;
+  return String(nextID);
 }
 
 class UserStub extends Discord.User {
@@ -41,18 +41,18 @@ class GuildStub extends Discord.Guild {
   }
 }
 
-class ChannelStub extends Discord.Channel {
-  constructor(client, data = {}) {
+class TextChannelStub extends Discord.TextChannel {
+  constructor(guild, data = {}) {
     data.id = data.id || generateID('channel');
     data.name = data.name || `Channel${data.id}`;
-    super(client, data);
+    super(guild, data);
 
-    this.send = client.sendMessageStub;
-    this.sendReactionStub = client.sendReactionStub;
+    this.send = guild.client.sendMessageStub;
+    this.sendReactionStub = guild.client.sendReactionStub;
   }
 
   newMessage(data) {
-    return this.client.dataManager.newMessage(this, data);
+    return this.guild.client.dataManager.newMessage(this, data);
   }
 }
 
@@ -78,12 +78,16 @@ class ClientStub extends EventEmitter {
 
     this.dataManager = new DataManagerStub(this);
 
+    const resolver = new Discord.Client().resolver;
+    resolver.client = this;
+    this.resolver = resolver;
+
     this.guilds = new Discord.Collection();
     this.channels = new Discord.Collection();
     this.users = new Discord.Collection();
 
     this.user = this.newUser({
-      name: 'Harmony',
+      username: 'Harmony',
       bot: true,
     });
   }
@@ -108,6 +112,12 @@ class DataManagerStub {
 
   newGuild(data = {}) {
     const guild = new GuildStub(this.client, data);
+
+    /* https://github.com/discordjs/discord.js/blob/stable/src/structures/Guild.js#L1113 */
+    const clientMember = new Discord.GuildMember(guild, { user: this.client.user });
+    guild.members.set(clientMember.id, clientMember);
+    /* - end */
+
     this.client.guilds.set(guild.id, guild);
     return guild;
   }
@@ -121,10 +131,22 @@ class DataManagerStub {
 
   newChannel(data = {}, guild) {
     /* https://github.com/discordjs/discord.js/blob/e5bd6ec150baee5ee4ca0830b80753b7c59f4844/src/client/ClientDataManager.js#L49 */
-    const channel = new ChannelStub(this.client, data);
-    guild = guild || this.client.guilds.get(data.guild_id);
-    if (guild) {
-      guild.channels.set(channel.id, channel);
+    data.type = data.type || Discord.Constants.ChannelTypes.TEXT;
+    let channel;
+    if (data.type === Discord.Constants.ChannelTypes.DM) {
+      throw new Error("DM channels not yet supported in stubs");
+    } else if (data.type === Discord.Constants.ChannelTypes.GROUP_DM) {
+      throw new Error("Group DM channels not yet supported in stubs");
+    } else {
+      guild = guild || this.client.guilds.get(data.guild_id);
+      if (guild) {
+        if (data.type === Discord.Constants.ChannelTypes.TEXT) {
+          channel = new TextChannelStub(guild, data);
+        } else {
+          throw new Error("Non-text channels not yet supported in stubs");
+        }
+        guild.channels.set(channel.id, channel);
+      }
     }
     this.client.channels.set(channel.id, channel);
     return channel;
