@@ -238,8 +238,4 @@ describe('Harmony', function() {
       });
     });
   });
-
-  describe('processCommand', function() {
-    it('works to a basic level');
-  });
 });
