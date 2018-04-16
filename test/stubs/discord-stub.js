@@ -7,6 +7,7 @@ let nextIDs = {
   guild: 2000,
   channel: 3000,
   message: 4000,
+  attachment: 5000,
 };
 
 function generateID(item) {
@@ -39,6 +40,14 @@ class GuildStub extends Discord.Guild {
     data.guild_id = this.id;
     return this.client.dataManager.newChannel(data);
   }
+
+  newGuildMember(data = {}) {
+    // https://github.com/discordjs/discord.js/blob/stable/src/structures/Guild.js#L1113
+    data.user = data.user || this.client.newUser(data);
+    const clientMember = new Discord.GuildMember(this, data);
+    this.members.set(clientMember.id, clientMember);
+    return clientMember;
+  }
 }
 
 class TextChannelStub extends Discord.TextChannel {
@@ -67,6 +76,19 @@ class MessageStub extends Discord.Message {
 
     this.react = client.sendReactionStub;
   }
+
+  newAttachment(data = {}) {
+    data.id = data.id || generateID('attachment');
+    const attachment = new Discord.MessageAttachment(this, data);
+    this.attachments.set(attachment.id, attachment);
+    return attachment;
+  }
+
+  newEmbed(data = {}) {
+    const embed = new Discord.MessageEmbed(this, data);
+    this.embeds.push(embed);
+    return embed;
+  }
 }
 
 class DataManagerStub {
@@ -77,10 +99,7 @@ class DataManagerStub {
   newGuild(data = {}) {
     const guild = new GuildStub(this.client, data);
 
-    /* https://github.com/discordjs/discord.js/blob/stable/src/structures/Guild.js#L1113 */
-    const clientMember = new Discord.GuildMember(guild, { user: this.client.user });
-    guild.members.set(clientMember.id, clientMember);
-    /* - end */
+    guild.newGuildMember({ user: this.client.user });
 
     this.client.guilds.set(guild.id, guild);
     return guild;

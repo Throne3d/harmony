@@ -1,4 +1,5 @@
 const harmony = require('../lib/harmony');
+const Discord = require('discord.js');
 const winston = require('winston');
 const sinon = require('sinon');
 const chai = require('chai');
@@ -29,6 +30,46 @@ describe('Harmony', function() {
       expect(bot.client.login.args).to.deep.equal([
         ['sample token']
       ]);
+    });
+  });
+
+  describe('debugifyMessage', function() {
+    it('debugs a simple message', function() {
+      const bot = createBot();
+      const author = bot.client.newUser({
+        discriminator: 1234,
+        username: 'Temp'
+      });
+      const message = bot.client.channel.newMessage({
+        content: `test`,
+        mentions: new Discord.Collection([]),
+        author
+      });
+      expect(bot.debugifyMessage(message)).to.equal("Temp#1234: test");
+    });
+
+    it('debugs a complicated message', function() {
+      const bot = createBot();
+      const author = bot.client.newUser({
+        discriminator: '4321',
+        username: 'Temp'
+      });
+
+      const otherUser = bot.client.newUser({
+        id: '123456',
+        username: 'Test'
+      });
+      const otherMember = bot.client.guild.newGuildMember({ nick: 'Nick', user: otherUser });
+
+      const message = bot.client.channel.newMessage({
+        content: `test ${otherMember}`,
+        mentions: new Discord.Collection([[otherUser.id, otherUser]]),
+        author,
+      });
+      message.newAttachment();
+      message.newEmbed();
+
+      expect(bot.debugifyMessage(message)).to.equal("Temp#4321: test @Nick [has attachments, has embeds]");
     });
   });
 
