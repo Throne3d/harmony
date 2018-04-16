@@ -8,20 +8,6 @@ const expect = chai.expect;
 const { createBot } = require('./helpers');
 
 describe('Harmony', function() {
-  describe('constructor', function() {
-    it('accepts a token', function() {
-      const bot = new harmony.Harmony("token");
-      expect(bot.token).to.equal("token");
-    });
-
-    it('binds events', function() {
-      sinon.spy(harmony.Harmony.prototype, 'bindEvents');
-      const bot = new harmony.Harmony();
-      expect(bot.bindEvents.callCount).to.equal(1);
-      harmony.Harmony.prototype.bindEvents.restore();
-    });
-  });
-
   describe('bindEvents', function() {
     beforeEach(function() {
       this.bot = new harmony.Harmony('');
