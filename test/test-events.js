@@ -1,16 +1,15 @@
-const harmony = require('../lib/harmony');
 const Discord = require('discord.js');
 const winston = require('winston');
 const EventEmitter = require('events');
 const sinon = require('sinon');
 const chai = require('chai');
 const expect = chai.expect;
-const { createBot } = require('./helpers');
+const { createBot, initBot } = require('./helpers');
 
 describe('Harmony', function() {
   describe('bindEvents', function() {
     beforeEach(function() {
-      this.bot = new harmony.Harmony('');
+      this.bot = initBot();
       this.bot.client = new EventEmitter();
       this.bot.bindEvents();
     });

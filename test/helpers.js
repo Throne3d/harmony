@@ -1,13 +1,20 @@
-const harmony = require('../lib/harmony');
+const Harmony = require('../lib/harmony');
 const discordStub = require('./stubs/discord-stub');
 
 function createBot(clientType) {
   clientType = clientType || 'SimplestClientStub';
   const client = discordStub[clientType];
-  const bot = new harmony.Harmony('temp');
+  const bot = initBot();
   bot.client = new client();
   bot.bindEvents();
   return bot;
 }
 
-exports.createBot = createBot;
+function initBot() {
+  return new Harmony('temp');
+}
+
+module.exports = {
+  createBot,
+  initBot,
+};

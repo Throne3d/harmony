@@ -1,4 +1,4 @@
-const harmony = require('../lib/harmony');
+const Harmony = require('../lib/harmony');
 const Discord = require('discord.js');
 const winston = require('winston');
 const sinon = require('sinon');
@@ -9,15 +9,15 @@ const { createBot } = require('./helpers');
 describe('Harmony', function() {
   describe('constructor', function() {
     it('accepts a token', function() {
-      const bot = new harmony.Harmony("token");
+      const bot = new Harmony("token");
       expect(bot.token).to.equal("token");
     });
 
     it('binds events', function() {
-      sinon.spy(harmony.Harmony.prototype, 'bindEvents');
-      const bot = new harmony.Harmony();
+      sinon.spy(Harmony.prototype, 'bindEvents');
+      const bot = new Harmony();
       expect(bot.bindEvents.callCount).to.equal(1);
-      harmony.Harmony.prototype.bindEvents.restore();
+      Harmony.prototype.bindEvents.restore();
     });
   });
 
