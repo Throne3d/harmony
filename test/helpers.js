@@ -1,4 +1,5 @@
 const Harmony = require('../lib/harmony');
+const Command = require('../lib/command');
 const discordStub = require('./stubs/discord-stub');
 
 function createBot(clientType) {
@@ -14,7 +15,19 @@ function initBot() {
   return new Harmony('temp');
 }
 
+function createCommand(data, bot) {
+  bot = bot || initBot();
+  const commandDefaults = {
+    name: 'test',
+    description: 'test description',
+    process: function() { throw new Error("Example command was called to process."); }
+  };
+  data = Object.assign({}, commandDefaults, data);
+  return new Command(data, bot);
+}
+
 module.exports = {
   createBot,
   initBot,
+  createCommand,
 };

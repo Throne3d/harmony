@@ -2,7 +2,8 @@ const Discord = require('discord.js');
 const sinon = require('sinon');
 const chai = require('chai');
 const expect = chai.expect;
-const { createBot } = require('./helpers');
+const { createBot, initBot, createCommand } = require('./helpers');
+const Command = require('../lib/command');
 
 describe('Harmony', function() {
   context('command functions', function() {
@@ -87,16 +88,17 @@ describe('Harmony', function() {
 
       it('lists commands', function() {
         const bot = this.bot;
-        bot.commands = {
-          help: {
-            description: 'Get some help!',
-            process: this.command.process,
-          },
-          test: {
-            description: 'Test command',
-            aliases: ['other', 'command']
-          }
-        };
+        bot.commands = {};
+        bot.addCommand({
+          name: 'help',
+          description: 'Get some help!',
+          process: this.command.process,
+        });
+        bot.addCommand({
+          name: 'test',
+          description: 'Test command',
+          aliases: ['other', 'command'],
+        });
 
         const message = bot.client.channel.newMessage({
           content: '!help',
@@ -220,6 +222,51 @@ describe('Harmony', function() {
           expect(this.bot.client.sendReactionStub.callCount).to.equal(0);
         });
       });
+    });
+  });
+});
+
+describe('Command', function() {
+  describe('constructor', function() {
+    it('rejects invalid parameters', function() {
+      const wrap = function() {
+        new Command({ invalid: 'test', description: 'test' });
+      };
+      expect(wrap).to.throw(Error, "Invalid command keys: invalid");
+    });
+
+    it('sets attributes with valid parameters', function() {
+      const bot = initBot();
+      const handler = function process() { };
+      const command = new Command({
+        aliases: ['test'],
+        description: 'example command',
+        name: 'test',
+        process: handler
+      }, bot);
+      expect(command.aliases).to.deep.equal(['test']);
+      expect(command.description).to.equal('example command');
+      expect(command.process).to.equal(handler);
+      expect(command.bot).to.equal(bot);
+    });
+  });
+
+  describe('toHelpString', function() {
+    it('processes a command without aliases', function() {
+      const command = createCommand({
+        description: 'test command',
+        name: 'test',
+      });
+      expect(command.toHelpString()).to.equal("`test`: test command");
+    });
+
+    it('processes a command with aliases', function() {
+      const command = createCommand({
+        description: 'example command',
+        name: 'example',
+        aliases: ['another', 'command'],
+      });
+      expect(command.toHelpString()).to.equal("`example`: example command [aliased to `another`, `command`]");
     });
   });
 });
