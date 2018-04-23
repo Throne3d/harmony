@@ -88,17 +88,17 @@ describe('Harmony', function() {
 
       it('lists commands', function() {
         const bot = this.bot;
-        bot.commands = {};
-        bot.addCommand({
+        bot.commands.list = {};
+        bot.commands.addCommand(new Command({
           name: 'help',
           description: 'Get some help!',
           process: this.command.process,
-        });
-        bot.addCommand({
+        }, bot));
+        bot.commands.addCommand(new Command({
           name: 'test',
           description: 'Test command',
           aliases: ['other', 'command'],
-        });
+        }, bot));
 
         const message = bot.client.channel.newMessage({
           content: '!help',
