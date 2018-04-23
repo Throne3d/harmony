@@ -1,9 +1,4 @@
-const Harmony = require('../lib/harmony');
-const Discord = require('discord.js');
-const winston = require('winston');
-const sinon = require('sinon');
-const chai = require('chai');
-const expect = chai.expect;
+const { expect, sinon, Discord, winston, Harmony } = require('./imports');
 const { createBot } = require('./helpers');
 
 describe('Harmony', function() {

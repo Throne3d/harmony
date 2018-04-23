@@ -1,9 +1,5 @@
-const Discord = require('discord.js');
-const sinon = require('sinon');
-const chai = require('chai');
-const expect = chai.expect;
+const { expect, sinon, Discord, Command } = require('./imports');
 const { createBot, initBot, createCommand } = require('./helpers');
-const Command = require('../lib/command');
 
 describe('Harmony', function() {
   context('command functions', function() {

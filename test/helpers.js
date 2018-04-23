@@ -1,5 +1,4 @@
-const Harmony = require('../lib/harmony');
-const Command = require('../lib/command');
+const { Harmony, Command } = require('./imports');
 const discordStub = require('./stubs/discord-stub');
 
 function createBot(clientType) {
