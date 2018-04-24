@@ -1,9 +1,5 @@
-const Discord = require('discord.js');
-const winston = require('winston');
+const { expect, sinon, winston, Discord } = require('./imports');
 const EventEmitter = require('events');
-const sinon = require('sinon');
-const chai = require('chai');
-const expect = chai.expect;
 const { createBot, initBot } = require('./helpers');
 
 describe('Harmony', function() {
