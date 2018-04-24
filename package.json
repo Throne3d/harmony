@@ -25,6 +25,7 @@
     "commander": "^2.15.1",
     "discord.js": "^11.3.2",
     "lodash": "^4.17.5",
+    "node-persist": "^3.0.0",
     "winston": "^2.4.1"
   },
   "devDependencies": {

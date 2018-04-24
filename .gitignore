@@ -59,3 +59,4 @@ typings/
 
 # Harmony-specific files
 config.json
+.node-persist/

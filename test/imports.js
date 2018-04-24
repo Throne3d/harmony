@@ -7,6 +7,7 @@ const sinon = require('sinon');
 
 const Harmony = require('../lib/harmony');
 const Command = require('../lib/command');
+const { PersistenceManager } = require('../lib/persistence');
 
 module.exports = {
   Discord,
@@ -18,4 +19,5 @@ module.exports = {
 
   Harmony,
   Command,
+  PersistenceManager,
 };
