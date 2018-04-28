@@ -2,10 +2,14 @@ const { expect, sinon, Discord } = require('./imports');
 const { createBot } = require('./helpers');
 
 describe('Harmony', function() {
+  beforeEach(async function() {
+    this.bot = await createBot();
+  });
+
   context('actions', function() {
     describe('performReactions', function() {
       it('does nothing with an empty list of reactions', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: 'Some random message',
           mentions: new Discord.Collection()
@@ -17,14 +21,14 @@ describe('Harmony', function() {
       });
 
       it('sends a single reaction', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: 'Some random message',
           mentions: new Discord.Collection()
         });
         const messageReactStub = sinon.stub();
         message.react = messageReactStub;
-        const reaction = new Discord.MessageReaction(message, '👍', 1, true);
+        const reaction = message.newReaction('👍', 1, true);
         messageReactStub.resolves(reaction);
         return bot.performReactions(message, ['👍']).then(reacts => {
           expect(reacts).to.deep.equal([reaction]);
@@ -36,16 +40,16 @@ describe('Harmony', function() {
       });
 
       it('sends multiple reactions in succession', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: 'Some random message',
           mentions: new Discord.Collection()
         });
         const messageReactStub = sinon.stub();
         message.react = messageReactStub;
-        const reaction1 = new Discord.MessageReaction(message, '👍', 1, true);
-        const reaction2 = new Discord.MessageReaction(message, '👎', 1, true);
-        const reaction3 = new Discord.MessageReaction(message, '❗', 1, true);
+        const reaction1 = message.newReaction('👍', 1, true);
+        const reaction2 = message.newReaction('👎', 1, true);
+        const reaction3 = message.newReaction('❗', 1, true);
 
         function quickPromise(count, reaction) {
           return new Promise(function(resolve) {
@@ -71,17 +75,17 @@ describe('Harmony', function() {
       });
 
       it('handles an error when reacting multiple', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: 'Some random message',
           mentions: new Discord.Collection()
         });
         const messageReactStub = sinon.stub();
         message.react = messageReactStub;
-        const reaction1 = new Discord.MessageReaction(message, '👍', 1, true);
-        const reaction2 = new Discord.MessageReaction(message, '👎', 1, true);
-        const removeStub1 = sinon.stub(reaction1, 'remove');
-        const removeStub2 = sinon.stub(reaction2, 'remove');
+        const reaction1 = message.newReaction('👍', 1, true);
+        const reaction2 = message.newReaction('👎', 1, true);
+        const removeStub1 = reaction1.remove = sinon.stub();
+        const removeStub2 = reaction2.remove = sinon.stub();
         removeStub1.resolves(reaction1);
         removeStub2.resolves(reaction2);
 
@@ -106,7 +110,7 @@ describe('Harmony', function() {
 
     describe('longRespondTo', function() {
       it('sends short messages without further change', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: 'Message',
           mentions: new Discord.Collection()
@@ -126,7 +130,7 @@ describe('Harmony', function() {
       });
 
       it('sends long messages as PMs in succession', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const author = bot.client.newUser();
         const message = bot.client.channel.newMessage({
           content: 'Message',
@@ -172,6 +176,154 @@ describe('Harmony', function() {
           expect(reacts).to.deep.equal(['📬 succeeded']);
           expect(sentSummary).to.be.null;
         });
+      });
+    });
+
+    describe('emojiPrompt', function() {
+      beforeEach(function() {
+        this.message = this.bot.client.channel.newMessage({
+          content: 'Message',
+          mentions: new Discord.Collection()
+        });
+      });
+
+      it('offers reactions to press on message', async function() {
+        const { bot, message } = this;
+        const reactionList = ['✅', '❎'];
+
+        bot.performReactions = sinon.stub().withArgs(message, reactionList).resolves([]);
+        message.awaitReactions = sinon.stub().resolves();
+
+        await bot.emojiPrompt(message, reactionList);
+
+        expect(bot.performReactions.callCount).to.equal(1);
+      });
+
+      it('returns selection', async function() {
+        const { bot, message } = this;
+        const reactionList = ['✅', '❎'];
+
+        bot.performReactions = sinon.stub().withArgs(message, reactionList).resolves([]);
+        message.awaitReactions = sinon.stub().resolves('test');
+
+        const resp = await bot.emojiPrompt(message, reactionList);
+
+        expect(bot.performReactions.callCount).to.equal(1);
+        expect(message.awaitReactions.callCount).to.equal(1);
+        expect(resp).to.equal('test');
+      });
+
+      it('removes own reactions on selection', async function() {
+        const { bot, message } = this;
+        const reactionList = ['✅', '❎'];
+
+        const reaction1 = message.newReaction('✅', 1, true);
+        reaction1.remove = sinon.stub();
+
+        const reaction2 = message.newReaction('❎', 1, true);
+        reaction2.remove = sinon.stub();
+
+        bot.performReactions = sinon.stub().withArgs(message, reactionList).resolves([reaction1, reaction2]);
+        message.awaitReactions = sinon.stub().resolves();
+
+        await bot.emojiPrompt(message, reactionList);
+
+        expect(bot.performReactions.callCount).to.equal(1);
+        expect(message.awaitReactions.callCount).to.equal(1);
+        expect(reaction1.remove.args).to.deep.equal([[]]);
+        expect(reaction2.remove.args).to.deep.equal([[]]);
+      });
+
+      it('awaits reactions correctly with no target', async function() {
+        const { bot, message } = this;
+        const reactionList = ['✅', '❎'];
+
+        const reaction1 = message.newReaction('✅', 1, true);
+        const reaction2 = message.newReaction('❎', 1, true);
+        reaction1.remove = reaction2.remove = sinon.stub();
+
+        const botUser = bot.client.user;
+        const otherUser = bot.client.newUser();
+        const otherUser2 = bot.client.newUser();
+
+        bot.performReactions = sinon.stub().withArgs(message, reactionList).resolves([reaction1, reaction2]);
+        message.awaitReactions = sinon.stub().callsFake(function(filter, opts) {
+          expect(opts).to.deep.equal({ max: 1, time: 15000 });
+          expect(filter(reaction1, botUser)).to.equal(false);
+          expect(filter(reaction2, botUser)).to.equal(false);
+
+          reaction1.count = 2;
+          expect(filter(reaction1, otherUser)).to.equal(true);
+          reaction1.count = 3;
+          expect(filter(reaction1, otherUser2)).to.equal(true);
+
+          const lateBotReaction = message.newReaction('❓', 1, true);
+          const lateOtherReaction = message.newReaction('❗', 1, true);
+          expect(filter(lateBotReaction, botUser)).to.equal(false);
+          expect(filter(lateOtherReaction, otherUser)).to.equal(false);
+          return Promise.resolve();
+        });
+
+        await bot.emojiPrompt(message, reactionList);
+
+        expect(bot.performReactions.callCount).to.equal(1);
+        expect(message.awaitReactions.callCount).to.equal(1);
+      });
+
+      it('awaits reactions correctly with target', async function() {
+        const { bot, message } = this;
+        const reactionList = ['✅', '❎'];
+
+        const reaction1 = message.newReaction('✅', 1, true);
+        const reaction2 = message.newReaction('❎', 1, true);
+        reaction1.remove = reaction2.remove = sinon.stub();
+
+        const botUser = bot.client.user;
+        const otherUser = bot.client.newUser();
+        const otherUser2 = bot.client.newUser();
+
+        bot.performReactions = sinon.stub().withArgs(message, reactionList).resolves([reaction1, reaction2]);
+        message.awaitReactions = sinon.stub().callsFake(function(filter, opts) {
+          expect(opts).to.deep.equal({ max: 1, time: 15000 });
+          expect(filter(reaction1, botUser)).to.equal(false);
+          expect(filter(reaction2, botUser)).to.equal(false);
+
+          reaction1.count = 2;
+          expect(filter(reaction1, otherUser)).to.equal(true);
+          reaction1.count = 3;
+          expect(filter(reaction1, otherUser2)).to.equal(false);
+          return Promise.resolve();
+        });
+
+        await bot.emojiPrompt(message, reactionList, otherUser);
+
+        expect(bot.performReactions.callCount).to.equal(1);
+        expect(message.awaitReactions.callCount).to.equal(1);
+      });
+
+      it('does not perform extraneous actions', async function() {
+        const { bot, message } = this;
+        const reactionList = ['✅', '❎'];
+
+        const reaction1 = message.newReaction('✅', 1, true);
+        reaction1.remove = sinon.stub();
+
+        const reaction2 = message.newReaction('❎', 1, true);
+        reaction2.remove = sinon.stub();
+
+        bot.performReactions = sinon.stub().withArgs(message, reactionList).resolves([reaction1, reaction2]);
+        message.awaitReactions = sinon.stub().resolves('test');
+
+        const resp = await bot.emojiPrompt(message, reactionList);
+
+        expect(bot.performReactions.callCount).to.equal(1);
+        expect(message.awaitReactions.callCount).to.equal(1);
+        expect(resp).to.equal('test');
+        expect(reaction1.remove.args).to.deep.equal([[]]);
+        expect(reaction2.remove.args).to.deep.equal([[]]);
+
+        expect(bot.client.sendMessageStub.callCount).to.equal(0);
+        expect(bot.client.sendReactionStub.callCount).to.equal(0);
       });
     });
   });

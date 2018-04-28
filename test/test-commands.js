@@ -4,6 +4,10 @@ const { createBot, initBot, createCommand } = require('./helpers');
 describe('Harmony', function() {
   context('command functions', function() {
     describe('processCommand', function() {
+      beforeEach(async function() {
+        this.bot = await createBot();
+      });
+
       const commandName = 'test';
       const aliasName = 'word';
 
@@ -18,7 +22,7 @@ describe('Harmony', function() {
       }
 
       it('handles no command found', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: '!nonexistent',
           mentions: new Discord.Collection()
@@ -33,9 +37,8 @@ describe('Harmony', function() {
         });
       });
 
-      function jointTest(command, args) {
+      function jointTest(bot, command, args) {
         const commandString = `${command}` + (args ? ` ${args}` : '');
-        const bot = createBot();
         const message = bot.client.channel.newMessage({
           content: `!${commandString}`,
           mentions: new Discord.Collection()
@@ -55,21 +58,21 @@ describe('Harmony', function() {
 
       context('with named command', function() {
         it('processes with no args', function() {
-          return jointTest(commandName, '');
+          return jointTest(this.bot, commandName, '');
         });
 
         it('processes with args', function() {
-          return jointTest(commandName, 'example args');
+          return jointTest(this.bot, commandName, 'example args');
         });
       });
 
       context('with aliased command', function() {
         it('processes with no args', function() {
-          return jointTest(aliasName, '');
+          return jointTest(this.bot, aliasName, '');
         });
 
         it('processes with args', function() {
-          return jointTest(aliasName, 'example args');
+          return jointTest(this.bot, aliasName, 'example args');
         });
       });
     });
@@ -77,8 +80,8 @@ describe('Harmony', function() {
 
   context('commands', function() {
     describe('help', function() {
-      beforeEach(function() {
-        this.bot = createBot();
+      beforeEach(async function() {
+        this.bot = await createBot();
         this.command = this.bot.listCommands().help;
       });
 
@@ -120,8 +123,8 @@ describe('Harmony', function() {
     });
 
     describe('roll', function() {
-      beforeEach(function() {
-        this.bot = createBot();
+      beforeEach(async function() {
+        this.bot = await createBot();
         this.command = this.bot.listCommands().dice;
         this.randomStub = sinon.stub(Math, 'random');
       });
@@ -217,6 +220,50 @@ describe('Harmony', function() {
           expect(this.bot.client.sendMessageStub.callCount).to.equal(0);
           expect(this.bot.client.sendReactionStub.callCount).to.equal(0);
         });
+      });
+    });
+
+    describe('payAttention', function() {
+      beforeEach(async function() {
+        this.bot = await createBot();
+        this.command = this.bot.listCommands().payAttention;
+      });
+
+      it('enables wantsMoreCheck if previously disabled', async function() {
+        const bot = this.bot;
+        const message = this.bot.client.channel.newMessage({
+          content: '!payAttention',
+        });
+        message.reply = sinon.stub().resolves();
+
+        let wantsMoreCheck = await bot.persistenceManager.getUserData(message.author, 'wantsMoreCheck');
+        expect(wantsMoreCheck).not.to.be.ok;
+
+        await this.command.process('payAttention', message, '');
+        expect(message.reply.args).to.deep.equal([
+          ["I'll now ask if you want me to respond when you say my name."]
+        ]);
+
+        wantsMoreCheck = await bot.persistenceManager.getUserData(message.author, 'wantsMoreCheck');
+        expect(wantsMoreCheck).to.equal(true);
+      });
+
+      it('disables wantsMoreCheck if previously enabled', async function() {
+        const bot = this.bot;
+        const message = this.bot.client.channel.newMessage({
+          content: '!payAttention',
+        });
+        message.reply = sinon.stub().resolves();
+
+        await bot.persistenceManager.setUserData(message.author, { wantsMoreCheck: true });
+
+        await this.command.process('payAttention', message, '');
+        expect(message.reply.args).to.deep.equal([
+          ["I'll now ignore when you say my name, unless you @ me."]
+        ]);
+
+        let wantsMoreCheck = await bot.persistenceManager.getUserData(message.author, 'wantsMoreCheck');
+        expect(wantsMoreCheck).to.equal(false);
       });
     });
   });

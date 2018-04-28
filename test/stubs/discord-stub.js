@@ -90,6 +90,14 @@ class MessageStub extends Discord.Message {
     this.embeds.push(embed);
     return embed;
   }
+
+  newReaction(name, count, me) {
+    const emoji = new Discord.ReactionEmoji(null, name);
+    const reaction = new Discord.MessageReaction(this, emoji, count, me);
+    emoji.reaction = reaction;
+    this.reactions.set(reaction.id, reaction);
+    return reaction;
+  }
 }
 
 class DataManagerStub {
@@ -166,7 +174,7 @@ class ClientStub extends EventEmitter {
     });
   }
 
-  rest() {
+  get rest() {
     throw new Error("Stub must not call REST methods.");
   }
 

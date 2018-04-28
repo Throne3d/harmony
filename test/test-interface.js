@@ -1,5 +1,6 @@
-const { expect, sinon, Discord, winston, Harmony } = require('./imports');
+const { expect, sinon, Discord, winston, Harmony, PersistenceManager } = require('./imports');
 const { createBot } = require('./helpers');
+const path = require('path');
 
 describe('Harmony', function() {
   describe('constructor', function() {
@@ -14,11 +15,21 @@ describe('Harmony', function() {
       expect(bot.bindEvents.callCount).to.equal(1);
       Harmony.prototype.bindEvents.restore();
     });
+
+    it('creates a persistence manager', function() {
+      const bot = new Harmony();
+      expect(bot.persistenceManager).to.be.an.instanceof(PersistenceManager);
+      expect(bot.persistenceManager.storage.options.dir).to.equal(path.join(process.cwd(), '.node-persist/storage'));
+    });
   });
 
   describe('start', function() {
+    beforeEach(async function() {
+      this.bot = await createBot();
+    });
+
     it('logs in with given token', function() {
-      const bot = createBot();
+      const bot = this.bot;
       bot.token = 'sample token';
       bot.client.login = sinon.stub();
       bot.start();
@@ -29,8 +40,12 @@ describe('Harmony', function() {
   });
 
   describe('debugifyMessage', function() {
+    beforeEach(async function() {
+      this.bot = await createBot();
+    });
+
     it('debugs a simple message', function() {
-      const bot = createBot();
+      const bot = this.bot;
       const author = bot.client.newUser({
         discriminator: 1234,
         username: 'Temp'
@@ -45,7 +60,7 @@ describe('Harmony', function() {
     });
 
     it('debugs a complicated message', function() {
-      const bot = createBot();
+      const bot = this.bot;
       const author = bot.client.newUser({
         discriminator: '4321',
         username: 'Temp'
@@ -71,9 +86,13 @@ describe('Harmony', function() {
   });
 
   describe('handleError', function() {
+    beforeEach(async function() {
+      this.bot = await createBot();
+    });
+
     it('logs errors', function() {
       winston.error = sinon.stub();
-      const bot = createBot();
+      const bot = this.bot;
       bot.handleError('test error');
       expect(winston.error.args).to.deep.equal([
         ['test error']
@@ -82,9 +101,13 @@ describe('Harmony', function() {
   });
 
   describe('handleWarning', function() {
+    beforeEach(async function() {
+      this.bot = await createBot();
+    });
+
     it('logs warnings', function() {
       winston.warn = sinon.stub();
-      const bot = createBot();
+      const bot = this.bot;
       bot.handleWarning('test warning');
       expect(winston.warn.args).to.deep.equal([
         ['test warning']

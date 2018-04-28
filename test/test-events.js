@@ -39,8 +39,12 @@ describe('Harmony', function() {
   });
 
   describe('processMessage', function() {
+    beforeEach(async function() {
+      this.bot = await createBot();
+    });
+
     it('skips own messages', function() {
-      const bot = createBot();
+      const bot = this.bot;
       const message = bot.client.channel.newMessage({ author: bot.client.user });
       return bot.processMessage(message).then(processed => {
         expect(bot.client.sendMessageStub.callCount).to.equal(0);
@@ -50,7 +54,7 @@ describe('Harmony', function() {
     });
 
     it('processes mentions', function() {
-      const bot = createBot();
+      const bot = this.bot;
       const botUser = bot.client.user;
       const message = bot.client.channel.newMessage({
         content: `${botUser}, test`,
@@ -76,7 +80,7 @@ describe('Harmony', function() {
     });
 
     it('processes generic messages', function() {
-      const bot = createBot();
+      const bot = this.bot;
       const message = bot.client.channel.newMessage({
         content: `test`,
         mentions: new Discord.Collection([])
@@ -102,8 +106,12 @@ describe('Harmony', function() {
   });
 
   describe('processGenericMessage', function() {
+    beforeEach(async function() {
+      this.bot = await createBot();
+    });
+
     it('processes a detected command', function() {
-      const bot = createBot();
+      const bot = this.bot;
       const message = bot.client.channel.newMessage({
         content: '!test',
         mentions: new Discord.Collection([])
@@ -126,7 +134,7 @@ describe('Harmony', function() {
     });
 
     it('handles an unhandled command-like', function() {
-      const bot = createBot();
+      const bot = this.bot;
       const message = bot.client.channel.newMessage({
         content: '!nonexistent',
         mentions: new Discord.Collection([])
@@ -154,7 +162,7 @@ describe('Harmony', function() {
     });
 
     it('handles non-commands', function() {
-      const bot = createBot();
+      const bot = this.bot;
       const message = bot.client.channel.newMessage({
         content: 'message text',
         mentions: new Discord.Collection([])
@@ -175,8 +183,12 @@ describe('Harmony', function() {
   });
 
   describe('processMention', function() {
+    beforeEach(async function() {
+      this.bot = await createBot();
+    });
+
     it('handles commands', function() {
-      const bot = createBot();
+      const bot = this.bot;
       const botUser = bot.client.user;
       const message = bot.client.channel.newMessage({
         content: `${botUser}, test`,
@@ -195,7 +207,7 @@ describe('Harmony', function() {
     });
 
     it('handles non-commands', function() {
-      const bot = createBot();
+      const bot = this.bot;
       const botUser = bot.client.user;
       const message = bot.client.channel.newMessage({
         content: `${botUser}, nonexistent`,
