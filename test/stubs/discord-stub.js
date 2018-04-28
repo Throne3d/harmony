@@ -166,7 +166,7 @@ class ClientStub extends EventEmitter {
     });
   }
 
-  rest() {
+  get rest() {
     throw new Error("Stub must not call REST methods.");
   }
 
