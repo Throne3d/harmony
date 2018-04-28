@@ -222,6 +222,50 @@ describe('Harmony', function() {
         });
       });
     });
+
+    describe('payAttention', function() {
+      beforeEach(async function() {
+        this.bot = await createBot();
+        this.command = this.bot.listCommands().payAttention;
+      });
+
+      it('enables wantsMoreCheck if previously disabled', async function() {
+        const bot = this.bot;
+        const message = this.bot.client.channel.newMessage({
+          content: '!payAttention',
+        });
+        message.reply = sinon.stub().resolves();
+
+        let wantsMoreCheck = await bot.persistenceManager.getUserData(message.author, 'wantsMoreCheck');
+        expect(wantsMoreCheck).not.to.be.ok;
+
+        await this.command.process('payAttention', message, '');
+        expect(message.reply.args).to.deep.equal([
+          ["I'll now ask if you want me to respond when you say my name."]
+        ]);
+
+        wantsMoreCheck = await bot.persistenceManager.getUserData(message.author, 'wantsMoreCheck');
+        expect(wantsMoreCheck).to.equal(true);
+      });
+
+      it('disables wantsMoreCheck if previously enabled', async function() {
+        const bot = this.bot;
+        const message = this.bot.client.channel.newMessage({
+          content: '!payAttention',
+        });
+        message.reply = sinon.stub().resolves();
+
+        await bot.persistenceManager.setUserData(message.author, { wantsMoreCheck: true });
+
+        await this.command.process('payAttention', message, '');
+        expect(message.reply.args).to.deep.equal([
+          ["I'll now ignore when you say my name, unless you @ me."]
+        ]);
+
+        let wantsMoreCheck = await bot.persistenceManager.getUserData(message.author, 'wantsMoreCheck');
+        expect(wantsMoreCheck).to.equal(false);
+      });
+    });
   });
 });
 

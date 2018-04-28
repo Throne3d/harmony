@@ -1,5 +1,6 @@
-const { expect, sinon, Discord, winston, Harmony } = require('./imports');
+const { expect, sinon, Discord, winston, Harmony, PersistenceManager } = require('./imports');
 const { createBot } = require('./helpers');
+const path = require('path');
 
 describe('Harmony', function() {
   describe('constructor', function() {
@@ -13,6 +14,12 @@ describe('Harmony', function() {
       const bot = new Harmony();
       expect(bot.bindEvents.callCount).to.equal(1);
       Harmony.prototype.bindEvents.restore();
+    });
+
+    it('creates a persistence manager', function() {
+      const bot = new Harmony();
+      expect(bot.persistenceManager).to.be.an.instanceof(PersistenceManager);
+      expect(bot.persistenceManager.storage.options.dir).to.equal(path.join(process.cwd(), '.node-persist/storage'));
     });
   });
 
