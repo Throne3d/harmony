@@ -5,11 +5,13 @@ const fs = require('fs');
 const util = require('util');
 const persist = require('node-persist');
 
-function createBot(clientType) {
+async function createBot(clientType) {
   clientType = clientType || 'SimplestClientStub';
   const client = discordStub[clientType];
   const bot = initBot();
   bot.client = new client();
+  bot.persistenceManager = null;
+  bot.persistenceManager = await createPersistenceManager(bot);
   bot.bindEvents();
   return bot;
 }
@@ -31,7 +33,7 @@ function createCommand(data, bot) {
 
 const testDataDir = '.node-persist/harmony-test/storage';
 
-function createPersistenceManager(bot, config, skipDataDestruction) {
+async function createPersistenceManager(bot, config, skipDataDestruction) {
   const absoluteDir = path.join(process.cwd(), path.normalize(testDataDir));
   const access = util.promisify(fs.access);
   bot = bot || createBot();
@@ -45,7 +47,8 @@ function createPersistenceManager(bot, config, skipDataDestruction) {
         persist.create(config).clear();
       }, _error => {});
   }
-  return promise.then(_ => new PersistenceManager(bot, config));
+  await promise;
+  return bot.persistenceManager = new PersistenceManager(bot, config);
 }
 
 module.exports = {

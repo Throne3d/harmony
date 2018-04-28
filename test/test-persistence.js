@@ -1,17 +1,21 @@
 const { expect, PersistenceManager } = require('./imports');
-const { createBot, createPersistenceManager } = require('./helpers');
+const { createBot } = require('./helpers');
 
 describe('PersistenceManager', function() {
   describe('constructor', function() {
+    beforeEach(async function() {
+      this.bot = await createBot();
+    });
+
     it('accepts a bot', function() {
-      const bot = createBot();
+      const bot = this.bot;
       const manager = new PersistenceManager(bot);
       expect(manager.bot).to.equal(bot);
       expect(manager.storage).to.be.ok;
     });
 
     it('eventually initializes', function() {
-      const bot = createBot();
+      const bot = this.bot;
       const manager = new PersistenceManager(bot);
       return manager.init.then(_ => true);
     });
@@ -19,8 +23,8 @@ describe('PersistenceManager', function() {
 
   context('with users', function() {
     beforeEach(async function() {
-      this.bot = createBot();
-      this.manager = await createPersistenceManager(this.bot);
+      this.bot = await createBot();
+      this.manager = this.bot.persistenceManager;
       this.user = this.bot.client.newUser();
     });
 

@@ -2,10 +2,14 @@ const { expect, sinon, Discord } = require('./imports');
 const { createBot } = require('./helpers');
 
 describe('Harmony', function() {
+  beforeEach(async function() {
+    this.bot = await createBot();
+  });
+
   context('actions', function() {
     describe('performReactions', function() {
       it('does nothing with an empty list of reactions', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: 'Some random message',
           mentions: new Discord.Collection()
@@ -17,7 +21,7 @@ describe('Harmony', function() {
       });
 
       it('sends a single reaction', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: 'Some random message',
           mentions: new Discord.Collection()
@@ -36,7 +40,7 @@ describe('Harmony', function() {
       });
 
       it('sends multiple reactions in succession', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: 'Some random message',
           mentions: new Discord.Collection()
@@ -71,7 +75,7 @@ describe('Harmony', function() {
       });
 
       it('handles an error when reacting multiple', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: 'Some random message',
           mentions: new Discord.Collection()
@@ -106,7 +110,7 @@ describe('Harmony', function() {
 
     describe('longRespondTo', function() {
       it('sends short messages without further change', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: 'Message',
           mentions: new Discord.Collection()
@@ -126,7 +130,7 @@ describe('Harmony', function() {
       });
 
       it('sends long messages as PMs in succession', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const author = bot.client.newUser();
         const message = bot.client.channel.newMessage({
           content: 'Message',

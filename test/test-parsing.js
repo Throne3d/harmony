@@ -3,10 +3,14 @@ const { createBot } = require('./helpers');
 
 describe('Harmony', function() {
   context('parsing', function() {
+    beforeEach(async function() {
+      this.bot = await createBot();
+    });
+
     describe('checkMessageAddressesMe', function() {
       context('in guild channel', function() {
         it('resolves negatively for regular message', function() {
-          const bot = createBot();
+          const bot = this.bot;
           const message = bot.client.channel.newMessage({
             content: 'Some random message',
             mentions: new Discord.Collection()
@@ -19,7 +23,7 @@ describe('Harmony', function() {
         });
 
         it('resolves negatively for unclear mention', function() {
-          const bot = createBot();
+          const bot = this.bot;
           const botUser = bot.client.user;
           const message = bot.client.channel.newMessage({
             content: `there is a bot named ${botUser} which responds to commands`,
@@ -33,7 +37,7 @@ describe('Harmony', function() {
         });
 
         it('resolves positively for clear mention', function() {
-          const bot = createBot();
+          const bot = this.bot;
           const botUser = bot.client.user;
           const message = bot.client.channel.newMessage({
             content: `${botUser}, test command`,
@@ -53,7 +57,7 @@ describe('Harmony', function() {
 
     describe('getCommand', function() {
       it('works with a non-command', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: 'test',
           mentions: new Discord.Collection()
@@ -63,7 +67,7 @@ describe('Harmony', function() {
       });
 
       it('works with a basic command', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: '!test',
           mentions: new Discord.Collection()
@@ -73,7 +77,7 @@ describe('Harmony', function() {
       });
 
       it('works with a different command prefix', function() {
-        const bot = createBot();
+        const bot = this.bot;
         const message = bot.client.channel.newMessage({
           content: '?test',
           mentions: new Discord.Collection()
@@ -85,7 +89,7 @@ describe('Harmony', function() {
       });
 
       it('rejects probable negatives', function() {
-        const bot = createBot();
+        const bot = this.bot;
         let message;
 
         message = bot.client.channel.newMessage({
