@@ -39,6 +39,29 @@ describe('Harmony', function() {
     });
   });
 
+  describe('debugifyUser', function() {
+    beforeEach(async function() {
+      this.bot = await createBot();
+    });
+
+    it('debugs a simple user', function() {
+      const author = this.bot.client.newUser({
+        discriminator: '1234',
+        username: 'Temp',
+      });
+      expect(this.bot.debugifyUser(author)).to.equal('Temp#1234');
+    });
+
+    it('debugs a bot user', function() {
+      const author = this.bot.client.newUser({
+        discriminator: '1235',
+        username: 'Example',
+        bot: true,
+      });
+      expect(this.bot.debugifyUser(author)).to.equal('Example#1235 [BOT]');
+    });
+  });
+
   describe('debugifyMessage', function() {
     beforeEach(async function() {
       this.bot = await createBot();
@@ -47,33 +70,43 @@ describe('Harmony', function() {
     it('debugs a simple message', function() {
       const bot = this.bot;
       const author = bot.client.newUser({
-        discriminator: 1234,
-        username: 'Temp'
+        discriminator: '1234',
+        username: 'Temp',
       });
+      bot.client.guild.name = 'test';
       bot.client.channel.name = 'general';
       const message = bot.client.channel.newMessage({
         content: `test`,
-        mentions: new Discord.Collection([]),
-        author
+        author,
       });
-      expect(bot.debugifyMessage(message)).to.equal("#general – Temp#1234: test");
+      expect(bot.debugifyMessage(message)).to.equal("test > #general – Temp#1234: test");
     });
 
     it('debugs a complicated message', function() {
       const bot = this.bot;
       const author = bot.client.newUser({
         discriminator: '4321',
-        username: 'Temp'
+        username: 'Temp',
       });
 
       const otherUser = bot.client.newUser({
         id: '123456',
-        username: 'Test'
+        username: 'Test',
       });
-      const otherMember = bot.client.guild.newGuildMember({ nick: 'Nick', user: otherUser });
+      const otherMember = bot.client.guild.newGuildMember({
+        nick: 'Nick',
+        user: otherUser,
+      });
 
-      bot.client.channel.name = 'chat';
-      const message = bot.client.channel.newMessage({
+      bot.client.guild.name = 'test guild';
+      const category = bot.client.guild.newCategory({
+        name: 'category',
+      });
+      const channel = bot.client.guild.newChannel({
+        name: 'chat',
+        parent_id: category.id,
+      });
+      const message = channel.newMessage({
         content: `test ${otherMember}`,
         mentions: new Discord.Collection([[otherUser.id, otherUser]]),
         author,
@@ -81,7 +114,81 @@ describe('Harmony', function() {
       message.newAttachment();
       message.newEmbed();
 
-      expect(bot.debugifyMessage(message)).to.equal("#chat – Temp#4321: test @Nick [has attachments, has embeds]");
+      expect(bot.debugifyMessage(message)).to.equal("test guild > category > #chat – Temp#4321: test @Nick [has attachments, has embeds]");
+    });
+
+    it('debugs an inbound PM', function() {
+      const bot = this.bot;
+      const author = bot.client.newUser({
+        discriminator: '1235',
+        username: 'Temp',
+      });
+      const channel = bot.client.newDM({
+        recipients: [{id: author.id}],
+      });
+      const message = channel.newMessage({
+        content: 'example',
+        author,
+      });
+      expect(bot.debugifyMessage(message)).to.equal("PM – Temp#1235: example");
+    });
+
+    it('debugs an outbound PM', function() {
+      const bot = this.bot;
+      bot.client.user.username = 'Harmony';
+      bot.client.user.discriminator = '1236';
+      const author = bot.client.newUser({
+        discriminator: '1237',
+        username: 'Temp'
+      });
+      const channel = bot.client.newDM({
+        recipients: [{id: author.id}],
+      });
+      const message = channel.newMessage({
+        content: 'example',
+        author: bot.client.user,
+      });
+      expect(bot.debugifyMessage(message)).to.equal("PM to Temp#1237 – Harmony#1236 [BOT]: example");
+    });
+
+    it('debugs a group DM', function() {
+      const bot = this.bot;
+      const author = bot.client.newUser({
+        discriminator: '1238',
+        username: 'User'
+      });
+      const channel = bot.client.newGroupDM({
+        recipients: [
+          {id: bot.client.user.id},
+          {id: author.id},
+        ],
+        name: 'Test group',
+      });
+      const message = channel.newMessage({
+        content: 'short message',
+        author: author,
+      });
+      expect(bot.debugifyMessage(message)).to.equal("Test group (Group DM) – User#1238: short message");
+    });
+
+    it('debugs a nameless group DM', function() {
+      const bot = this.bot;
+      const author = bot.client.newUser({
+        discriminator: '1238',
+        username: 'User'
+      });
+      const channel = bot.client.newGroupDM({
+        recipients: [
+          {id: bot.client.user.id},
+          {id: author.id},
+        ],
+        name: null,
+      });
+      const message = channel.newMessage({
+        content: 'short message',
+        author: author,
+      });
+      expect(bot.debugifyMessage(message)).to.equal("(Group DM) – User#1238: short message");
     });
   });
 
