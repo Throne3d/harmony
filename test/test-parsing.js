@@ -54,10 +54,11 @@ describe('Harmony', function() {
           beforeEach(function() {
             const bot = this.bot;
             const botUser = bot.client.user;
-            const botMember = bot.getMyGuildMemberIn(bot.client.guild);
-            this.user = bot.client.newUser();
+            const displayName = bot.getDisplayNameFor(bot.client.channel);
+            const guildMember = bot.client.guild.newGuildMember();
+            this.user = guildMember.user;
             this.message = bot.client.channel.newMessage({
-              content: `${botMember.displayName}, here is a test`,
+              content: `${displayName}, here is a test`,
               mentions: new Discord.Collection([]),
               author: this.user,
             });

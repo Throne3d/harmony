@@ -36,8 +36,15 @@ class GuildStub extends Discord.Guild {
     super(client, data);
   }
 
+  newCategory(data = {}) {
+    data.guild_id = data.guild_id || this.id;
+    data.type = data.type || Discord.Constants.ChannelTypes.CATEGORY;
+    return this.client.dataManager.newChannel(data);
+  }
+
   newChannel(data = {}) {
-    data.guild_id = this.id;
+    data.guild_id = data.guild_id || this.id;
+    data.type = data.type || Discord.Constants.ChannelTypes.TEXT;
     return this.client.dataManager.newChannel(data);
   }
 
@@ -50,10 +57,18 @@ class GuildStub extends Discord.Guild {
   }
 }
 
-class TextChannelStub extends Discord.TextChannel {
+class CategoryChannelStub extends Discord.CategoryChannel {
   constructor(guild, data = {}) {
     data.id = data.id || generateID('channel');
     data.name = data.name || `channel${data.id}`;
+    super(guild, data);
+  }
+}
+
+class TextChannelStub extends Discord.TextChannel {
+  constructor(guild, data = {}) {
+    data.id = data.id || generateID('channel');
+    data.name = (typeof data.name !== 'undefined') ? data.name : `channel${data.id}`;
     super(guild, data);
 
     this.send = guild.client.sendMessageStub;
@@ -63,6 +78,32 @@ class TextChannelStub extends Discord.TextChannel {
   newMessage(data) {
     data.mentions = data.mentions || new Discord.Collection();
     return this.guild.client.dataManager.newMessage(this, data);
+  }
+}
+
+class DMChannelStub extends Discord.DMChannel {
+  constructor(client, data = {}) {
+    data.id = data.id || generateID('channel');
+    data.name = (typeof data.name !== 'undefined') ? data.name : `channel${data.id}`;
+    super(client, data);
+  }
+
+  newMessage(data) {
+    data.mentions = data.mentions || new Discord.Collection();
+    return this.client.dataManager.newMessage(this, data);
+  }
+}
+
+class GroupDMChannelStub extends Discord.GroupDMChannel {
+  constructor(client, data = {}) {
+    data.id = data.id || generateID('channel');
+    data.name = (typeof data.name !== 'undefined') ? data.name : `channel${data.id}`;
+    super(client, data);
+  }
+
+  newMessage(data) {
+    data.mentions = data.mentions || new Discord.Collection();
+    return this.client.dataManager.newMessage(this, data);
   }
 }
 
@@ -123,17 +164,20 @@ class DataManagerStub {
 
   newChannel(data = {}, guild) {
     /* https://github.com/discordjs/discord.js/blob/e5bd6ec150baee5ee4ca0830b80753b7c59f4844/src/client/ClientDataManager.js#L49 */
-    data.type = data.type || Discord.Constants.ChannelTypes.TEXT;
+    data.type = data.type;
     let channel;
     if (data.type === Discord.Constants.ChannelTypes.DM) {
-      throw new Error("DM channels not yet supported in stubs");
+      data.recipients = data.recipients;
+      channel = new DMChannelStub(this.client, data);
     } else if (data.type === Discord.Constants.ChannelTypes.GROUP_DM) {
-      throw new Error("Group DM channels not yet supported in stubs");
+      channel = new GroupDMChannelStub(this.client, data);
     } else {
       guild = guild || this.client.guilds.get(data.guild_id);
       if (guild) {
         if (data.type === Discord.Constants.ChannelTypes.TEXT) {
           channel = new TextChannelStub(guild, data);
+        } else if (data.type === Discord.Constants.ChannelTypes.CATEGORY) {
+          channel = new CategoryChannelStub(guild, data);
         } else {
           throw new Error("Non-text channels not yet supported in stubs");
         }
@@ -185,6 +229,21 @@ class ClientStub extends EventEmitter {
   newUser(data) {
     return this.dataManager.newUser(data);
   }
+
+  newDM(data = {}) {
+    data.recipients = data.recipients || [{id: this.newUser().id}];
+    data.type = Discord.Constants.ChannelTypes.DM;
+    return this.dataManager.newChannel(data);
+  }
+
+  newGroupDM(data = {}) {
+    data.recipients = data.recipients || [
+      {id: this.user.id},
+      {id: this.newUser().id},
+    ];
+    data.type = Discord.Constants.ChannelTypes.GROUP_DM;
+    return this.dataManager.newChannel(data);
+  }
 }
 
 class SimplestClientStub extends ClientStub {
@@ -193,6 +252,9 @@ class SimplestClientStub extends ClientStub {
 
     this.guild = this.newGuild();
     this.channel = this.guild.newChannel();
+
+    // create another channel to check
+    this.guild.newChannel();
   }
 }
 
