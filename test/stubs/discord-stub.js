@@ -230,16 +230,16 @@ class ClientStub extends EventEmitter {
     return this.dataManager.newUser(data);
   }
 
-  newDM(data) {
-    data.recipients = data.recipients || [{id: this.client.newUser().id}];
+  newDM(data = {}) {
+    data.recipients = data.recipients || [{id: this.newUser().id}];
     data.type = Discord.Constants.ChannelTypes.DM;
     return this.dataManager.newChannel(data);
   }
 
-  newGroupDM(data) {
+  newGroupDM(data = {}) {
     data.recipients = data.recipients || [
-      {id: this.client.user.id},
-      {id: this.client.newUser().id},
+      {id: this.user.id},
+      {id: this.newUser().id},
     ];
     data.type = Discord.Constants.ChannelTypes.GROUP_DM;
     return this.dataManager.newChannel(data);

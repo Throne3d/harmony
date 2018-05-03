@@ -192,6 +192,79 @@ describe('Harmony', function() {
     });
   });
 
+  describe('getDisplayNameFor', function() {
+    beforeEach(async function() {
+      this.bot = await createBot();
+    });
+
+    context('without given user', function() {
+      beforeEach(function() {
+        this.bot.client.user.username = 'Test username';
+      });
+
+      it('gets username for DMs', function() {
+        const dmChannel = this.bot.client.newDM();
+        expect(this.bot.getDisplayNameFor(dmChannel)).to.equal('Test username');
+      });
+
+      it('gets username for group DMs', function() {
+        const groupDMChannel = this.bot.client.newGroupDM();
+        expect(this.bot.getDisplayNameFor(groupDMChannel)).to.equal('Test username');
+      });
+
+      it('gets nickname for guild channels', function() {
+        const channel = this.bot.client.channel;
+        this.bot.client.guild.member(this.bot.client.user).nickname = 'Test nickname';
+        expect(this.bot.getDisplayNameFor(channel)).to.equal('Test nickname');
+      });
+
+      it('gets username fallback for guild channels', function() {
+        const channel = this.bot.client.channel;
+        expect(this.bot.getDisplayNameFor(channel)).to.equal('Test username');
+      });
+    });
+
+    context('with given user', function() {
+      beforeEach(function() {
+        this.user = this.bot.client.newUser({
+          username: 'Example user',
+        });
+      });
+
+      it('gets username for DMs', function() {
+        const dmChannel = this.bot.client.newDM();
+        expect(this.bot.getDisplayNameFor(dmChannel, this.user)).to.equal('Example user');
+      });
+
+      it('gets username for group DMs', function() {
+        const groupDMChannel = this.bot.client.newGroupDM();
+        expect(this.bot.getDisplayNameFor(groupDMChannel, this.user)).to.equal('Example user');
+      });
+
+      it('gets nickname for guild channels', function() {
+        const channel = this.bot.client.channel;
+        this.bot.client.guild.newGuildMember({
+          user: this.user,
+          nick: 'Example nickname',
+        });
+        expect(this.bot.getDisplayNameFor(channel, this.user)).to.equal('Example nickname');
+      });
+
+      it('gets username fallback for guild channels', function() {
+        const channel = this.bot.client.channel;
+        this.bot.client.guild.newGuildMember({
+          user: this.user,
+        });
+        expect(this.bot.getDisplayNameFor(channel, this.user)).to.equal('Example user');
+      });
+
+      it("gets username fallback if user isn't in guild channel", function() {
+        const channel = this.bot.client.channel;
+        expect(this.bot.getDisplayNameFor(channel, this.user)).to.equal('Example user');
+      });
+    });
+  });
+
   describe('handleError', function() {
     beforeEach(async function() {
       this.bot = await createBot();
