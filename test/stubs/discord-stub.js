@@ -164,10 +164,8 @@ class DataManagerStub {
 
   newChannel(data = {}, guild) {
     /* https://github.com/discordjs/discord.js/blob/e5bd6ec150baee5ee4ca0830b80753b7c59f4844/src/client/ClientDataManager.js#L49 */
-    data.type = data.type;
     let channel;
     if (data.type === Discord.Constants.ChannelTypes.DM) {
-      data.recipients = data.recipients;
       channel = new DMChannelStub(this.client, data);
     } else if (data.type === Discord.Constants.ChannelTypes.GROUP_DM) {
       channel = new GroupDMChannelStub(this.client, data);
