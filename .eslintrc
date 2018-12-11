@@ -14,7 +14,9 @@ rules:
     - "self"
   no-unused-vars:
     - 2
-    - argsIgnorePattern: "^_"
+    -
+      argsIgnorePattern: "^_"
+      varsIgnorePattern: "^_"
   block-scoped-var: 2
   dot-notation: 2
   eqeqeq: 2
@@ -23,6 +25,9 @@ rules:
   no-useless-return: 1
   no-shadow: 1
   eol-last: 1
+  indent:
+    - 1
+    - 2
   no-lonely-if: 1
   quote-props:
     - 2
